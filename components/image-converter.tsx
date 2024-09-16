@@ -16,7 +16,6 @@ import {
 import { ChevronDown, ChevronUp, Upload, Menu, X } from 'lucide-react'
 import { toast } from "@/hooks/use-toast"
 import Image from 'next/image'
-import { toPng } from 'html-to-image';
 
 const simpleChars = ' .:-=+*#%@';
 const complexChars = '" .\'^,":;Il!i><~+_-?][{}1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"';
@@ -203,13 +202,17 @@ export function ImageConverterComponent() {
     fileInputRef.current?.click()
   }
 
-  const saveAsImage = async () => {
-    if (resultRef.current) {
-      const dataUrl = await toPng(resultRef.current);
-      const link = document.createElement('a');
-      link.download = 'ascii-art.png';
-      link.href = dataUrl;
-      link.click();
+  const saveAsImage = () => {
+    if (result) {
+      const imgSrc = result.match(/src="([^"]+)"/)?.[1];
+      if (imgSrc) {
+        const link = document.createElement('a');
+        link.href = imgSrc;
+        link.download = 'ascii-art.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
     }
   }
 
@@ -232,7 +235,7 @@ export function ImageConverterComponent() {
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-900">Image Converter</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">ASCII Art Generator</h1>
           <nav className="hidden lg:flex space-x-4">
             <Button variant="ghost">Guide</Button>
             <Button variant="ghost">About</Button>
@@ -276,8 +279,8 @@ export function ImageConverterComponent() {
                             </label>
                           </div>
                         ) : (
-                          <div className="relative">
-                            <Image src={image} alt="Uploaded" className="max-w-full h-auto rounded-lg" layout="responsive" width={800} height={400} />
+                          <div className="relative flex justify-center">
+                            <Image src={image} alt="Uploaded" className="max-w-xs h-auto rounded-lg" layout="intrinsic" width={200} height={100} />
                             <div className="absolute top-2 right-2 flex space-x-2">
                               <Button size="icon" variant="secondary" onClick={clearImage}>
                                 <X className="h-4 w-4" />
@@ -291,8 +294,8 @@ export function ImageConverterComponent() {
                       </TabsContent>
                       <TabsContent value="result" className="mt-4">
                         {result ? (
-                          <div className="space-y-4">
-                            <div ref={resultRef} className="relative max-w-full overflow-x-auto" dangerouslySetInnerHTML={{ __html: result }} />
+                          <div className="flex justify-center items-center flex-col space-y-4">
+                            <div ref={resultRef} className="relative max-w-xs overflow-x-auto" dangerouslySetInnerHTML={{ __html: result }} />
                             <div className="flex space-x-2">
                               <Button onClick={saveAsImage}>Save as Image</Button>
                               <Button onClick={copyToClipboard}>Copy ASCII</Button>
