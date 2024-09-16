@@ -67,6 +67,21 @@ function imageToAscii(imageElement: HTMLImageElement, options: AsciiOptions = {}
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   let asciiArt = '';
 
+  const outputCanvas = document.createElement('canvas');
+  const outputCtx = outputCanvas.getContext('2d');
+  if (!outputCtx) throw new Error('Unable to get 2D context for output canvas');
+
+  const charWidth = 10;
+  const charHeight = 20;
+  outputCanvas.width = canvas.width * charWidth;
+  outputCanvas.height = canvas.height * charHeight;
+  outputCtx.font = `${charHeight}px monospace`;
+  outputCtx.textBaseline = 'top';
+
+  // Fill background
+  outputCtx.fillStyle = customBgColor || 'white';
+  outputCtx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+
   for (let y = 0; y < canvas.height; y++) {
     for (let x = 0; x < canvas.width; x++) {
       const offset = (y * canvas.width + x) * 4;
@@ -95,17 +110,17 @@ function imageToAscii(imageElement: HTMLImageElement, options: AsciiOptions = {}
       }
 
       if (colored) {
-        const style = `color: rgb(${r},${g},${b}); background-color: ${customBgColor || 'transparent'};`;
-        asciiArt += `<span style="${style}">${closestChar}</span>`;
+        outputCtx.fillStyle = `rgb(${r},${g},${b})`;
       } else {
-        const style = `color: ${customFgColor || 'black'}; background-color: ${customBgColor || 'transparent'};`;
-        asciiArt += `<span style="${style}">${closestChar}</span>`;
+        outputCtx.fillStyle = customFgColor || 'black';
       }
+      outputCtx.fillText(closestChar, x * charWidth, y * charHeight);
+      asciiArt += closestChar;
     }
     asciiArt += '\n';
   }
 
-  return asciiArt;
+  return { imageUrl: outputCanvas.toDataURL(), asciiText: asciiArt };
 }
 
 export function ImageConverterComponent() {
@@ -167,9 +182,9 @@ export function ImageConverterComponent() {
           blueWeight: rgbWeights.blue
         };
 
-        const ascii = imageToAscii(img, options);
-        setAsciiText(ascii);
-        setResult(`<div style="font-family: monospace; line-height: 1; white-space: pre; background-color: ${backgroundColor};">${ascii}</div>`);
+        const { imageUrl, asciiText } = imageToAscii(img, options);
+        setResult(`<img src="${imageUrl}" alt="ASCII Art" style="max-width: 100%;" />`);
+        setAsciiText(asciiText);
         setActiveTab("result");
       }
       img.src = image
@@ -199,7 +214,7 @@ export function ImageConverterComponent() {
   }
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(asciiText.replace(/<[^>]*>/g, '')).then(() => {
+    navigator.clipboard.writeText(asciiText).then(() => {
       toast({
         title: "Copied to clipboard",
         description: "ASCII art has been copied to your clipboard",
@@ -219,9 +234,8 @@ export function ImageConverterComponent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-semibold text-gray-900">Image Converter</h1>
           <nav className="hidden lg:flex space-x-4">
-            <Button variant="ghost">User Guide</Button>
-            <Button variant="ghost">How it Works</Button>
-            <Button variant="ghost">Contribute</Button>
+            <Button variant="ghost">Guide</Button>
+            <Button variant="ghost">About</Button>
           </nav>
           <DropdownMenu>
             <DropdownMenuTrigger asChild className="lg:hidden">
@@ -231,9 +245,8 @@ export function ImageConverterComponent() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>User Guide</DropdownMenuItem>
-              <DropdownMenuItem>How it Works</DropdownMenuItem>
-              <DropdownMenuItem>Contribute</DropdownMenuItem>
+              <DropdownMenuItem>Guide</DropdownMenuItem>
+              <DropdownMenuItem>About</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
