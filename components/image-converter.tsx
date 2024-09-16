@@ -16,6 +16,7 @@ import {
 import { ChevronDown, ChevronUp, Upload, Menu, X } from 'lucide-react'
 import { toast } from "@/hooks/use-toast"
 import Image from 'next/image'
+import { toPng } from 'html-to-image';
 
 const simpleChars = ' .:-=+*#%@';
 const complexChars = '" .\'^,":;Il!i><~+_-?][{}1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"';
@@ -110,6 +111,7 @@ function imageToAscii(imageElement: HTMLImageElement, options: AsciiOptions = {}
 export function ImageConverterComponent() {
   const [image, setImage] = useState<string | null>(null)
   const [result, setResult] = useState<string | null>(null)
+  const [asciiText, setAsciiText] = useState<string>('')
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [activeTab, setActiveTab] = useState("upload")
   const [colored, setColored] = useState(false)
@@ -122,6 +124,7 @@ export function ImageConverterComponent() {
   const [backgroundColor, setBackgroundColor] = useState<string>("#000000")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const resultRef = useRef<HTMLDivElement>(null)
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -165,7 +168,8 @@ export function ImageConverterComponent() {
         };
 
         const ascii = imageToAscii(img, options);
-        setResult(ascii);
+        setAsciiText(ascii);
+        setResult(`<div style="font-family: monospace; line-height: 1; white-space: pre; background-color: ${backgroundColor};">${ascii}</div>`);
         setActiveTab("result");
       }
       img.src = image
@@ -182,6 +186,25 @@ export function ImageConverterComponent() {
 
   const changeImage = () => {
     fileInputRef.current?.click()
+  }
+
+  const saveAsImage = async () => {
+    if (resultRef.current) {
+      const dataUrl = await toPng(resultRef.current);
+      const link = document.createElement('a');
+      link.download = 'ascii-art.png';
+      link.href = dataUrl;
+      link.click();
+    }
+  }
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(asciiText.replace(/<[^>]*>/g, '')).then(() => {
+      toast({
+        title: "Copied to clipboard",
+        description: "ASCII art has been copied to your clipboard",
+      });
+    });
   }
 
   useEffect(() => {
@@ -255,8 +278,12 @@ export function ImageConverterComponent() {
                       </TabsContent>
                       <TabsContent value="result" className="mt-4">
                         {result ? (
-                          <div className="relative">
-                            <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words leading-none" dangerouslySetInnerHTML={{ __html: result }} />
+                          <div className="space-y-4">
+                            <div ref={resultRef} className="relative max-w-full overflow-x-auto" dangerouslySetInnerHTML={{ __html: result }} />
+                            <div className="flex space-x-2">
+                              <Button onClick={saveAsImage}>Save as Image</Button>
+                              <Button onClick={copyToClipboard}>Copy ASCII</Button>
+                            </div>
                           </div>
                         ) : (
                           <div className="flex justify-center items-center w-full h-64 bg-gray-50 rounded-lg border-2 border-gray-300 border-dashed">
