@@ -183,7 +183,7 @@ export function ImageConverterComponent() {
         };
 
         const { imageUrl, asciiText } = imageToAscii(img, options);
-        setResult(`<img src="${imageUrl}" alt="ASCII Art" style="max-width: 100%;" />`);
+        setResult(`<Image src=${imageUrl} alt="ASCII Art" class="max-w-xs h-auto rounded-lg" width=250 height=200 />`)
         setAsciiText(asciiText);
         setActiveTab("result");
       }
@@ -280,12 +280,14 @@ export function ImageConverterComponent() {
                             </label>
                           </div>
                         ) : (
-                          <div className="relative flex justify-center">
-                            <Image src={image} alt="Uploaded" className="max-w-xs h-auto rounded-lg" layout="intrinsic" width={200} height={100} />
-                            <div className="absolute top-2 right-2 flex space-x-2">
-                              <Button size="icon" variant="secondary" onClick={clearImage}>
-                                <X className="h-4 w-4" />
-                              </Button>
+                          <div className="flex justify-center items-center flex-col space-y-4">
+                            <div ref={resultRef} className="relative max-w-xs overflow-x-auto cursor-pointer group">
+                              <Image src={image} alt="Uploaded" className="max-w-xs h-auto rounded-lg" width={250} height={200} />
+                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button size="icon" variant="secondary" onClick={clearImage}>
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         )}
