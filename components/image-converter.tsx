@@ -115,11 +115,11 @@ export function ImageConverterComponent() {
   const [colored, setColored] = useState(false)
   const [negative, setNegative] = useState(false)
   const [complex, setComplex] = useState(false)
-  const [rgbWeights, setRgbWeights] = useState({ red: 33, green: 34, blue: 33 })
+  const [rgbWeights, setRgbWeights] = useState({ red: 0.299, green: 0.587, blue: 0.114 })
   const [width, setWidth] = useState<string>("100")
   const [customAscii, setCustomAscii] = useState<string>("")
-  const [charColor, setCharColor] = useState<string>("#000000")
-  const [backgroundColor, setBackgroundColor] = useState<string>("#ffffff")
+  const [charColor, setCharColor] = useState<string>("#ffffff")
+  const [backgroundColor, setBackgroundColor] = useState<string>("#000000")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -135,15 +135,17 @@ export function ImageConverterComponent() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Check if RGB weights sum to 100
-    const totalRgbWeight = Object.values(rgbWeights).reduce((sum, weight) => sum + weight, 0)
-    if (totalRgbWeight !== 100) {
+    const EPSILON = 1e-10; // A small number close to zero
+
+    const totalRgbWeight = Object.values(rgbWeights).reduce((sum, weight) => sum + weight, 0);
+    if (Math.abs(totalRgbWeight - 1) > EPSILON) {
+      console.log("Invalid RGB Weights: ", totalRgbWeight);
       toast({
         title: "Invalid RGB Weights",
-        description: "RGB weights must sum to 100%",
+        description: "RGB weights must sum to 1",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     if (image) {
@@ -157,9 +159,9 @@ export function ImageConverterComponent() {
           asciiChars: customAscii || undefined,
           customFgColor: charColor,
           customBgColor: backgroundColor,
-          redWeight: rgbWeights.red / 100,
-          greenWeight: rgbWeights.green / 100,
-          blueWeight: rgbWeights.blue / 100
+          redWeight: rgbWeights.red,
+          greenWeight: rgbWeights.green,
+          blueWeight: rgbWeights.blue
         };
 
         const ascii = imageToAscii(img, options);
@@ -180,10 +182,6 @@ export function ImageConverterComponent() {
 
   const changeImage = () => {
     fileInputRef.current?.click()
-  }
-
-  const handleRgbWeightChange = (color: 'red' | 'green' | 'blue', value: number) => {
-    setRgbWeights(prev => ({ ...prev, [color]: value }))
   }
 
   useEffect(() => {
@@ -258,7 +256,7 @@ export function ImageConverterComponent() {
                       <TabsContent value="result" className="mt-4">
                         {result ? (
                           <div className="relative">
-                            <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: result }} />
+                            <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words leading-none" dangerouslySetInnerHTML={{ __html: result }} />
                           </div>
                         ) : (
                           <div className="flex justify-center items-center w-full h-64 bg-gray-50 rounded-lg border-2 border-gray-300 border-dashed">
@@ -322,7 +320,7 @@ export function ImageConverterComponent() {
                           </div>
                         </div>
                         <div className="space-y-4">
-                          <Label>RGB Weights (must sum to 100%)</Label>
+                          <Label>RGB Weights (must sum to 1)</Label>
                           <div className="grid grid-cols-3 gap-4">
                             {Object.entries(rgbWeights).map(([color, weight]) => (
                               <div key={color}>
@@ -331,9 +329,10 @@ export function ImageConverterComponent() {
                                   id={`${color}Weight`}
                                   type="number"
                                   value={weight}
-                                  onChange={(e) => handleRgbWeightChange(color as 'red' | 'green' | 'blue', parseInt(e.target.value) || 0)}
                                   min={0}
-                                  max={100}
+                                  max={1}
+                                  step={0.001}
+                                  onChange={(e) => setRgbWeights({ ...rgbWeights, [color]: parseFloat(e.target.value) })}
                                 />
                               </div>
                             ))}
