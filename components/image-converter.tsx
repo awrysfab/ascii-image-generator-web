@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronDown, ChevronUp, Upload, Menu, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, Upload, Menu, X, Maximize2 } from 'lucide-react'
 import { toast } from "@/hooks/use-toast"
 import Image from 'next/image'
 
@@ -46,7 +46,7 @@ function imageToAscii(imageElement: HTMLImageElement, options: AsciiOptions = {}
     asciiChars = complex ? complexChars : simpleChars,
     customFgColor,
     customBgColor,
-    redWeight = 0.299,   // Default weight for red
+    redWeight = 0.299, // Default weight for red
     greenWeight = 0.587, // Default weight for green
     blueWeight = 0.114   // Default weight for blue
   } = options;
@@ -136,6 +136,7 @@ export function ImageConverterComponent() {
   const [customAscii, setCustomAscii] = useState<string>("")
   const [charColor, setCharColor] = useState<string>("#ffffff")
   const [backgroundColor, setBackgroundColor] = useState<string>("#000000")
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const resultRef = useRef<HTMLDivElement>(null)
@@ -198,10 +199,6 @@ export function ImageConverterComponent() {
     }
   }
 
-  const changeImage = () => {
-    fileInputRef.current?.click()
-  }
-
   const saveAsImage = () => {
     if (result) {
       const imgSrc = result.match(/src="([^"]+)"/)?.[1];
@@ -223,6 +220,10 @@ export function ImageConverterComponent() {
         description: "ASCII art has been copied to your clipboard",
       });
     });
+  }
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen)
   }
 
   useEffect(() => {
@@ -285,9 +286,6 @@ export function ImageConverterComponent() {
                               <Button size="icon" variant="secondary" onClick={clearImage}>
                                 <X className="h-4 w-4" />
                               </Button>
-                              <Button size="sm" variant="secondary" onClick={changeImage}>
-                                Change
-                              </Button>
                             </div>
                           </div>
                         )}
@@ -295,7 +293,14 @@ export function ImageConverterComponent() {
                       <TabsContent value="result" className="mt-4">
                         {result ? (
                           <div className="flex justify-center items-center flex-col space-y-4">
-                            <div ref={resultRef} className="relative max-w-xs overflow-x-auto" dangerouslySetInnerHTML={{ __html: result }} />
+                            <div ref={resultRef} className="relative max-w-xs overflow-x-auto cursor-pointer group" onClick={toggleFullscreen}>
+                              <div dangerouslySetInnerHTML={{ __html: result }} />
+                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button size="icon" variant="secondary" onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }}>
+                                  <Maximize2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
                             <div className="flex space-x-2">
                               <Button onClick={saveAsImage}>Save as Image</Button>
                               <Button onClick={copyToClipboard}>Copy ASCII</Button>
@@ -392,6 +397,13 @@ export function ImageConverterComponent() {
         </div>
       </main>
       <canvas ref={canvasRef} style={{ display: 'none' }} />
+      {isFullscreen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={toggleFullscreen}>
+          <div className="max-w-4xl max-h-[90vh] overflow-auto bg-white p-4 rounded-lg" onClick={(e) => e.stopPropagation()}>
+            <div dangerouslySetInnerHTML={{ __html: result || '' }} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
