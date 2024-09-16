@@ -131,7 +131,7 @@ export function ImageConverterComponent() {
   const [negative, setNegative] = useState(false)
   const [complex, setComplex] = useState(false)
   const [rgbWeights, setRgbWeights] = useState({ red: 0.299, green: 0.587, blue: 0.114 })
-  const [width, setWidth] = useState<string>("120")
+  const [width, setWidth] = useState<string>("150")
   const [customAscii, setCustomAscii] = useState<string>("")
   const [charColor, setCharColor] = useState<string>("#ffffff")
   const [backgroundColor, setBackgroundColor] = useState<string>("#000000")
@@ -323,7 +323,7 @@ export function ImageConverterComponent() {
                         </div>
                         <div>
                           <Label htmlFor="charColor" className="text-sm font-semibold">Char Color</Label>
-                          <Input id="charColor" type="color" value={charColor} onChange={(e) => setCharColor(e.target.value)} />
+                          <Input id="charColor" type="color" value={charColor} onChange={(e) => setCharColor(e.target.value)} disabled={colored} />
                         </div>
                         <div>
                           <Label htmlFor="backgroundColor" className="text-sm font-semibold">Background Color</Label>
@@ -373,7 +373,7 @@ export function ImageConverterComponent() {
                         </div>
                         <div className="space-y-2">
                           <Label className="text-sm font-semibold">RGB Weights (must sum to 1)</Label>
-                          <div className="grid grid-cols-3 gap-4">
+                          <div className="grid grid-cols-4 gap-4">
                             {Object.entries(rgbWeights).map(([color, weight]) => (
                               <div key={color}>
                                 <Label htmlFor={`${color}Weight`}>{color.charAt(0).toUpperCase() + color.slice(1)}</Label>
@@ -388,6 +388,14 @@ export function ImageConverterComponent() {
                                 />
                               </div>
                             ))}
+                            <div>
+                              <Label className="text-sm font-semibold">Sum</Label>
+                              <Input
+                                type="number"
+                                value={Object.values(rgbWeights).reduce((sum, weight) => sum + weight, 0).toFixed(3)}
+                                disabled
+                              />
+                            </div>
                           </div>
                         </div>
                       </CollapsibleContent>
