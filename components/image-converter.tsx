@@ -309,17 +309,45 @@ export function ImageConverterComponent() {
                       </TabsContent>
                     </Tabs>
                     <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="width">Width</Label>
-                        <Input id="width" type="number" value={width} onChange={(e) => setWidth(e.target.value)} placeholder="Enter width" />
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <Label htmlFor="width" className="text-sm font-semibold">Width</Label>
+                          <Input id="width" type="number" value={width} onChange={(e) => setWidth(e.target.value)} placeholder="Enter width" />
+                        </div>
+                        <div>
+                          <Label htmlFor="charColor" className="text-sm font-semibold">Char Color</Label>
+                          <Input id="charColor" type="color" value={charColor} onChange={(e) => setCharColor(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label htmlFor="backgroundColor" className="text-sm font-semibold">Background Color</Label>
+                          <Input id="backgroundColor" type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} />
+                        </div>
                       </div>
+                    </div>
+                    <div className="space-y-4">
                       <div className="flex items-center space-x-2">
                         <Switch
                           id="colored"
                           checked={colored}
                           onCheckedChange={setColored}
                         />
-                        <Label htmlFor="colored">Colored</Label>
+                        <Label htmlFor="colored" className="text-sm font-semibold">Colored</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="negative"
+                          checked={negative}
+                          onCheckedChange={setNegative}
+                        />
+                        <Label htmlFor="negative" className="text-sm font-semibold">Negative</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="complex"
+                          checked={complex}
+                          onCheckedChange={setComplex}
+                        />
+                        <Label htmlFor="complex" className="text-sm font-semibold">Complex</Label>
                       </div>
                     </div>
                     <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
@@ -330,40 +358,12 @@ export function ImageConverterComponent() {
                         </Button>
                       </CollapsibleTrigger>
                       <CollapsibleContent className="space-y-4 mt-4">
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="negative"
-                            checked={negative}
-                            onCheckedChange={setNegative}
-                          />
-                          <Label htmlFor="negative">Negative</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="complex"
-                            checked={complex}
-                            onCheckedChange={setComplex}
-                          />
-                          <Label htmlFor="complex">Complex</Label>
-                        </div>
-                        <div>
-                          <Label htmlFor="customAscii">Custom ASCII Char</Label>
+                        <div className="space-y-2">
+                          <Label htmlFor="customAscii" className="text-sm font-semibold">Custom ASCII Char</Label>
                           <Input id="customAscii" type="text" value={customAscii} onChange={(e) => setCustomAscii(e.target.value)} placeholder="Enter custom ASCII char" />
                         </div>
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor="charColor">Char Color</Label>
-                              <Input id="charColor" type="color" value={charColor} onChange={(e) => setCharColor(e.target.value)} />
-                            </div>
-                            <div>
-                              <Label htmlFor="backgroundColor">Background Color</Label>
-                              <Input id="backgroundColor" type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} />
-                            </div>
-                          </div>
-                        </div>
-                        <div className="space-y-4">
-                          <Label>RGB Weights (must sum to 1)</Label>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-semibold">RGB Weights (must sum to 1)</Label>
                           <div className="grid grid-cols-3 gap-4">
                             {Object.entries(rgbWeights).map(([color, weight]) => (
                               <div key={color}>
