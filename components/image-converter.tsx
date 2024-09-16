@@ -17,6 +17,96 @@ import { ChevronDown, ChevronUp, Upload, Menu, X } from 'lucide-react'
 import { toast } from "@/hooks/use-toast"
 import Image from 'next/image'
 
+const simpleChars = ' .:-=+*#%@';
+const complexChars = '" .\'^,":;Il!i><~+_-?][{}1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"';
+
+interface AsciiOptions {
+  width?: number;
+  colored?: boolean;
+  negative?: boolean;
+  complex?: boolean;
+  asciiChars?: string;
+  customFgColor?: string;
+  customBgColor?: string;
+  redWeight?: number;
+  greenWeight?: number;
+  blueWeight?: number;
+}
+
+function getCharBrightness(char: string) {
+  return complexChars.indexOf(char) / complexChars.length;
+}
+
+function imageToAscii(imageElement: HTMLImageElement, options: AsciiOptions = {}) {
+  const {
+    width = 100,
+    colored = false,
+    negative = false,
+    complex = false,
+    asciiChars = complex ? complexChars : simpleChars,
+    customFgColor,
+    customBgColor,
+    redWeight = 0.299,   // Default weight for red
+    greenWeight = 0.587, // Default weight for green
+    blueWeight = 0.114   // Default weight for blue
+  } = options;
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Unable to get 2D context');
+
+  const charAspectRatio = 0.5;
+
+  const scaleFactor = width / imageElement.width;
+  canvas.width = width;
+  canvas.height = Math.floor(imageElement.height * scaleFactor * charAspectRatio);
+
+  ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  let asciiArt = '';
+
+  for (let y = 0; y < canvas.height; y++) {
+    for (let x = 0; x < canvas.width; x++) {
+      const offset = (y * canvas.width + x) * 4;
+      const r = imageData.data[offset];
+      const g = imageData.data[offset + 1];
+      const b = imageData.data[offset + 2];
+
+      // Use customized weights for brightness calculation
+      let brightness = redWeight * r + greenWeight * g + blueWeight * b;
+
+      if (negative) {
+        brightness = 255 - brightness;
+      }
+
+      const normalizedBrightness = brightness / 255;
+      let closestChar = ' ';
+      let minDifference = 1;
+
+      for (const char of asciiChars) {
+        const charBrightness = getCharBrightness(char);
+        const difference = Math.abs(normalizedBrightness - charBrightness);
+        if (difference < minDifference) {
+          minDifference = difference;
+          closestChar = char;
+        }
+      }
+
+      if (colored) {
+        const style = `color: rgb(${r},${g},${b}); background-color: ${customBgColor || 'transparent'};`;
+        asciiArt += `<span style="${style}">${closestChar}</span>`;
+      } else {
+        const style = `color: ${customFgColor || 'black'}; background-color: ${customBgColor || 'transparent'};`;
+        asciiArt += `<span style="${style}">${closestChar}</span>`;
+      }
+    }
+    asciiArt += '\n';
+  }
+
+  return asciiArt;
+}
+
 export function ImageConverterComponent() {
   const [image, setImage] = useState<string | null>(null)
   const [result, setResult] = useState<string | null>(null)
@@ -26,6 +116,10 @@ export function ImageConverterComponent() {
   const [negative, setNegative] = useState(false)
   const [complex, setComplex] = useState(false)
   const [rgbWeights, setRgbWeights] = useState({ red: 33, green: 34, blue: 33 })
+  const [width, setWidth] = useState<string>("100")
+  const [customAscii, setCustomAscii] = useState<string>("")
+  const [charColor, setCharColor] = useState<string>("#000000")
+  const [backgroundColor, setBackgroundColor] = useState<string>("#ffffff")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -55,18 +149,22 @@ export function ImageConverterComponent() {
     if (image) {
       const img = new window.Image()
       img.onload = () => {
-        const canvas = canvasRef.current
-        if (canvas) {
-          const ctx = canvas.getContext('2d')
-          if (ctx) {
-            canvas.width = img.width
-            canvas.height = img.height
-            ctx.scale(-1, 1) // Flip horizontally
-            ctx.drawImage(img, -img.width, 0, img.width, img.height)
-            setResult(canvas.toDataURL())
-            setActiveTab("result")
-          }
-        }
+        const options = {
+          width: parseInt(width),
+          colored: colored,
+          negative: negative,
+          complex: complex,
+          asciiChars: customAscii || undefined,
+          customFgColor: charColor,
+          customBgColor: backgroundColor,
+          redWeight: rgbWeights.red / 100,
+          greenWeight: rgbWeights.green / 100,
+          blueWeight: rgbWeights.blue / 100
+        };
+
+        const ascii = imageToAscii(img, options);
+        setResult(ascii);
+        setActiveTab("result");
       }
       img.src = image
     }
@@ -160,7 +258,7 @@ export function ImageConverterComponent() {
                       <TabsContent value="result" className="mt-4">
                         {result ? (
                           <div className="relative">
-                            <Image src={result} alt="Result" className="max-w-full h-auto rounded-lg" layout="responsive" width={800} height={400} />
+                            <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: result }} />
                           </div>
                         ) : (
                           <div className="flex justify-center items-center w-full h-64 bg-gray-50 rounded-lg border-2 border-gray-300 border-dashed">
@@ -172,7 +270,7 @@ export function ImageConverterComponent() {
                     <div className="space-y-4">
                       <div>
                         <Label htmlFor="width">Width</Label>
-                        <Input id="width" type="number" placeholder="Enter width" />
+                        <Input id="width" type="number" value={width} onChange={(e) => setWidth(e.target.value)} placeholder="Enter width" />
                       </div>
                       <div className="flex items-center space-x-2">
                         <Switch
@@ -209,17 +307,17 @@ export function ImageConverterComponent() {
                         </div>
                         <div>
                           <Label htmlFor="customAscii">Custom ASCII Char</Label>
-                          <Input id="customAscii" type="text" placeholder="Enter custom ASCII char" />
+                          <Input id="customAscii" type="text" value={customAscii} onChange={(e) => setCustomAscii(e.target.value)} placeholder="Enter custom ASCII char" />
                         </div>
                         <div className="space-y-4">
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <Label htmlFor="charColor">Char Color</Label>
-                              <Input id="charColor" type="color" />
+                              <Input id="charColor" type="color" value={charColor} onChange={(e) => setCharColor(e.target.value)} />
                             </div>
                             <div>
                               <Label htmlFor="backgroundColor">Background Color</Label>
-                              <Input id="backgroundColor" type="color" />
+                              <Input id="backgroundColor" type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} />
                             </div>
                           </div>
                         </div>
