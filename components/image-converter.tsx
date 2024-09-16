@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ChevronDown, ChevronUp, Upload, Menu, X, Maximize2 } from 'lucide-react'
 import { toast } from "@/hooks/use-toast"
-import Image from 'next/image'
 
 const simpleChars = ' .:-=+*#%@';
 const complexChars = '" .\'^,":;Il!i><~+_-?][{}1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"';
@@ -132,7 +131,7 @@ export function ImageConverterComponent() {
   const [negative, setNegative] = useState(false)
   const [complex, setComplex] = useState(false)
   const [rgbWeights, setRgbWeights] = useState({ red: 0.299, green: 0.587, blue: 0.114 })
-  const [width, setWidth] = useState<string>("100")
+  const [width, setWidth] = useState<string>("120")
   const [customAscii, setCustomAscii] = useState<string>("")
   const [charColor, setCharColor] = useState<string>("#ffffff")
   const [backgroundColor, setBackgroundColor] = useState<string>("#000000")
@@ -183,7 +182,7 @@ export function ImageConverterComponent() {
         };
 
         const { imageUrl, asciiText } = imageToAscii(img, options);
-        setResult(`<Image src=${imageUrl} alt="ASCII Art" class="max-w-xs h-auto rounded-lg" width=250 height=200 />`)
+        setResult(`<img src="${imageUrl}" alt="ASCII Art" style="max-width: 100%;" />`);
         setAsciiText(asciiText);
         setActiveTab("result");
       }
@@ -255,7 +254,7 @@ export function ImageConverterComponent() {
           </DropdownMenu>
         </div>
       </header>
-      <main className="flex-grow py-12 px-4 sm:px-6 lg:px-8">
+      <main className="flex-grow py-6 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white shadow-xl rounded-lg overflow-hidden">
             <div className="p-6">
@@ -282,7 +281,8 @@ export function ImageConverterComponent() {
                         ) : (
                           <div className="flex justify-center items-center flex-col space-y-4">
                             <div ref={resultRef} className="relative max-w-xs overflow-x-auto cursor-pointer group">
-                              <Image src={image} alt="Uploaded" className="max-w-xs h-auto rounded-lg" width={250} height={200} />
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={image} alt="Uploaded" style={{ maxWidth: '100%' }} />
                               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button size="icon" variant="secondary" onClick={clearImage}>
                                   <X className="h-4 w-4" />
@@ -332,29 +332,31 @@ export function ImageConverterComponent() {
                       </div>
                     </div>
                     <div className="space-y-4">
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="colored"
-                          checked={colored}
-                          onCheckedChange={setColored}
-                        />
-                        <Label htmlFor="colored" className="text-sm font-semibold">Colored</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="negative"
-                          checked={negative}
-                          onCheckedChange={setNegative}
-                        />
-                        <Label htmlFor="negative" className="text-sm font-semibold">Negative</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="complex"
-                          checked={complex}
-                          onCheckedChange={setComplex}
-                        />
-                        <Label htmlFor="complex" className="text-sm font-semibold">Complex</Label>
+                      <div className="flex flex-wrap gap-8">
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="colored"
+                            checked={colored}
+                            onCheckedChange={setColored}
+                          />
+                          <Label htmlFor="colored" className="text-sm font-semibold">Colored</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="negative"
+                            checked={negative}
+                            onCheckedChange={setNegative}
+                          />
+                          <Label htmlFor="negative" className="text-sm font-semibold">Negative</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="complex"
+                            checked={complex}
+                            onCheckedChange={setComplex}
+                          />
+                          <Label htmlFor="complex" className="text-sm font-semibold">Complex</Label>
+                        </div>
                       </div>
                     </div>
                     <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
