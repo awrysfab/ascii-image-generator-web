@@ -2,125 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ChevronDown, ChevronUp, Upload, Menu, X, Maximize2 } from 'lucide-react'
 import { toast } from "@/hooks/use-toast"
-
-const simpleChars = ' .:-=+*#%@';
-const complexChars = '" .\'^,":;Il!i><~+_-?][{}1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"';
-
-interface AsciiOptions {
-  width?: number;
-  colored?: boolean;
-  negative?: boolean;
-  complex?: boolean;
-  asciiChars?: string;
-  customFgColor?: string;
-  customBgColor?: string;
-  redWeight?: number;
-  greenWeight?: number;
-  blueWeight?: number;
-}
-
-function getCharBrightness(char: string) {
-  return complexChars.indexOf(char) / complexChars.length;
-}
-
-function imageToAscii(imageElement: HTMLImageElement, options: AsciiOptions = {}) {
-  const {
-    width = 100,
-    colored = false,
-    negative = false,
-    complex = false,
-    asciiChars = complex ? complexChars : simpleChars,
-    customFgColor,
-    customBgColor,
-    redWeight = 0.299, // Default weight for red
-    greenWeight = 0.587, // Default weight for green
-    blueWeight = 0.114   // Default weight for blue
-  } = options;
-
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Unable to get 2D context');
-
-  const charAspectRatio = 0.5;
-
-  const scaleFactor = width / imageElement.width;
-  canvas.width = width;
-  canvas.height = Math.floor(imageElement.height * scaleFactor * charAspectRatio);
-
-  ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
-
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  let asciiArt = '';
-
-  const outputCanvas = document.createElement('canvas');
-  const outputCtx = outputCanvas.getContext('2d');
-  if (!outputCtx) throw new Error('Unable to get 2D context for output canvas');
-
-  const charWidth = 10;
-  const charHeight = 20;
-  outputCanvas.width = canvas.width * charWidth;
-  outputCanvas.height = canvas.height * charHeight;
-  outputCtx.font = `${charHeight}px monospace`;
-  outputCtx.textBaseline = 'top';
-
-  // Fill background
-  outputCtx.fillStyle = customBgColor || 'white';
-  outputCtx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
-
-  for (let y = 0; y < canvas.height; y++) {
-    for (let x = 0; x < canvas.width; x++) {
-      const offset = (y * canvas.width + x) * 4;
-      const r = imageData.data[offset];
-      const g = imageData.data[offset + 1];
-      const b = imageData.data[offset + 2];
-
-      // Use customized weights for brightness calculation
-      let brightness = redWeight * r + greenWeight * g + blueWeight * b;
-      // let brightness = (r + g + b) / 3;
-
-      if (negative) {
-        brightness = 255 - brightness;
-      }
-
-      const normalizedBrightness = brightness / 255;
-      let closestChar = ' ';
-      let minDifference = 1;
-
-      for (const char of asciiChars) {
-        const charBrightness = getCharBrightness(char);
-        const difference = Math.abs(normalizedBrightness - charBrightness);
-        if (difference < minDifference) {
-          minDifference = difference;
-          closestChar = char;
-        }
-      }
-
-      if (colored) {
-        outputCtx.fillStyle = `rgb(${r},${g},${b})`;
-      } else {
-        outputCtx.fillStyle = customFgColor || 'black';
-      }
-      outputCtx.fillText(closestChar, x * charWidth, y * charHeight);
-      asciiArt += closestChar;
-    }
-    asciiArt += '\n';
-  }
-
-  return { imageUrl: outputCanvas.toDataURL(), asciiText: asciiArt };
-}
+import { imageToAscii } from '@/utils/asciiConverter';
+import { Header } from '@/components/header';
+import { ImageUpload } from '@/components/image-upload';
+import { ResultDisplay } from '@/components/result-display';
+import { ConversionOptions } from '@/components/conversion-options';
 
 export function ImageConverterComponent() {
   const [image, setImage] = useState<string | null>(null)
@@ -132,23 +20,12 @@ export function ImageConverterComponent() {
   const [negative, setNegative] = useState(false)
   const [complex, setComplex] = useState(false)
   const [rgbWeights, setRgbWeights] = useState({ red: 0.299, green: 0.587, blue: 0.114 })
-  const [width, setWidth] = useState<string>("150")
+  const [width, setWidth] = useState<number>(150)
   const [customAscii, setCustomAscii] = useState<string>("")
   const [charColor, setCharColor] = useState<string>("#ffffff")
   const [backgroundColor, setBackgroundColor] = useState<string>("#000000")
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const resultRef = useRef<HTMLDivElement>(null)
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => setImage(e.target?.result as string)
-      reader.readAsDataURL(file)
-    }
-  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -170,7 +47,7 @@ export function ImageConverterComponent() {
       const img = new window.Image()
       img.onload = () => {
         const options = {
-          width: parseInt(width),
+          width: width,
           colored: colored,
           negative: negative,
           complex: complex,
@@ -191,37 +68,6 @@ export function ImageConverterComponent() {
     }
   }
 
-  const clearImage = () => {
-    setImage(null)
-    setResult(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-  }
-
-  const saveAsImage = () => {
-    if (result) {
-      const imgSrc = result.match(/src="([^"]+)"/)?.[1];
-      if (imgSrc) {
-        const link = document.createElement('a');
-        link.href = imgSrc;
-        link.download = 'ascii-art.png';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-    }
-  }
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(asciiText).then(() => {
-      toast({
-        title: "Copied to clipboard",
-        description: "ASCII art has been copied to your clipboard",
-      });
-    });
-  }
-
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen)
   }
@@ -234,27 +80,7 @@ export function ImageConverterComponent() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-900">ASCII Art Generator</h1>
-          <nav className="hidden lg:flex space-x-4">
-            <Button variant="ghost">Guide</Button>
-            <Button variant="ghost">About</Button>
-          </nav>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild className="lg:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Guide</DropdownMenuItem>
-              <DropdownMenuItem>About</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </header>
+      <Header />
       <main className="flex-grow py-6 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white shadow-xl rounded-lg overflow-hidden">
@@ -268,139 +94,32 @@ export function ImageConverterComponent() {
                         <TabsTrigger value="result">Result</TabsTrigger>
                       </TabsList>
                       <TabsContent value="upload" className="mt-4">
-                        {!image ? (
-                          <div className="flex justify-center items-center w-full">
-                            <label htmlFor="dropzone-file" className="flex flex-col justify-center items-center w-full h-64 bg-gray-50 rounded-lg border-2 border-gray-300 border-dashed cursor-pointer hover:bg-gray-100">
-                              <div className="flex flex-col justify-center items-center pt-5 pb-6">
-                                <Upload className="w-10 h-10 mb-3 text-gray-400" />
-                                <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                                <p className="text-xs text-gray-500">PNG, JPG or GIF (MAX. 800x400px)</p>
-                              </div>
-                              <input ref={fileInputRef} id="dropzone-file" type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
-                            </label>
-                          </div>
-                        ) : (
-                          <div className="flex justify-center items-center flex-col space-y-4">
-                            <div ref={resultRef} className="relative max-w-xs overflow-x-auto cursor-pointer group">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={image} alt="Uploaded" style={{ maxWidth: '100%' }} />
-                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button size="icon" variant="secondary" onClick={clearImage}>
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+                        <ImageUpload image={image} setImage={setImage} />
                       </TabsContent>
                       <TabsContent value="result" className="mt-4">
-                        {result ? (
-                          <div className="flex justify-center items-center flex-col space-y-4">
-                            <div ref={resultRef} className="relative max-w-xs overflow-x-auto cursor-pointer group" onClick={toggleFullscreen}>
-                              <div dangerouslySetInnerHTML={{ __html: result }} />
-                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button size="icon" variant="secondary" onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }}>
-                                  <Maximize2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="flex space-x-2">
-                              <Button onClick={saveAsImage}>Save as Image</Button>
-                              <Button onClick={copyToClipboard}>Copy ASCII</Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex justify-center items-center w-full h-64 bg-gray-50 rounded-lg border-2 border-gray-300 border-dashed">
-                            <p className="text-gray-500">Converted image will appear here</p>
-                          </div>
-                        )}
+                        <ResultDisplay result={result} asciiText={asciiText} />
                       </TabsContent>
                     </Tabs>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-3 gap-4">
-                        <div>
-                          <Label htmlFor="width" className="text-sm font-semibold">Width</Label>
-                          <Input id="width" type="number" value={width} onChange={(e) => setWidth(e.target.value)} placeholder="Enter width" />
-                        </div>
-                        <div>
-                          <Label htmlFor="charColor" className="text-sm font-semibold">Char Color</Label>
-                          <Input id="charColor" type="color" value={charColor} onChange={(e) => setCharColor(e.target.value)} disabled={colored} />
-                        </div>
-                        <div>
-                          <Label htmlFor="backgroundColor" className="text-sm font-semibold">Background Color</Label>
-                          <Input id="backgroundColor" type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="flex flex-wrap gap-8">
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="colored"
-                            checked={colored}
-                            onCheckedChange={setColored}
-                          />
-                          <Label htmlFor="colored" className="text-sm font-semibold">Colored</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="negative"
-                            checked={negative}
-                            onCheckedChange={setNegative}
-                          />
-                          <Label htmlFor="negative" className="text-sm font-semibold">Negative</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="complex"
-                            checked={complex}
-                            onCheckedChange={setComplex}
-                          />
-                          <Label htmlFor="complex" className="text-sm font-semibold">Complex</Label>
-                        </div>
-                      </div>
-                    </div>
-                    <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
-                      <CollapsibleTrigger asChild>
-                        <Button variant="outline" className="flex items-center justify-between w-full">
-                          Advanced Options
-                          {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="space-y-4 mt-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="customAscii" className="text-sm font-semibold">Custom ASCII Char</Label>
-                          <Input id="customAscii" type="text" value={customAscii} onChange={(e) => setCustomAscii(e.target.value)} placeholder="Enter custom ASCII char" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-sm font-semibold">RGB Weights (must sum to 1)</Label>
-                          <div className="grid grid-cols-4 gap-4">
-                            {Object.entries(rgbWeights).map(([color, weight]) => (
-                              <div key={color}>
-                                <Label htmlFor={`${color}Weight`}>{color.charAt(0).toUpperCase() + color.slice(1)}</Label>
-                                <Input
-                                  id={`${color}Weight`}
-                                  type="number"
-                                  value={weight}
-                                  min={0}
-                                  max={1}
-                                  step={0.001}
-                                  onChange={(e) => setRgbWeights({ ...rgbWeights, [color]: parseFloat(e.target.value) })}
-                                />
-                              </div>
-                            ))}
-                            <div>
-                              <Label className="text-sm font-semibold">Sum</Label>
-                              <Input
-                                type="number"
-                                value={Object.values(rgbWeights).reduce((sum, weight) => sum + weight, 0).toFixed(3)}
-                                disabled
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
+                    <ConversionOptions
+                      width={width}
+                      setWidth={setWidth}
+                      charColor={charColor}
+                      setCharColor={setCharColor}
+                      backgroundColor={backgroundColor}
+                      setBackgroundColor={setBackgroundColor}
+                      colored={colored}
+                      setColored={setColored}
+                      negative={negative}
+                      setNegative={setNegative}
+                      complex={complex}
+                      setComplex={setComplex}
+                      customAscii={customAscii}
+                      setCustomAscii={setCustomAscii}
+                      rgbWeights={rgbWeights}
+                      setRgbWeights={(weights: { red: number; green: number; blue: number }) => setRgbWeights(weights)}
+                      showAdvanced={showAdvanced}
+                      setShowAdvanced={setShowAdvanced}
+                    />
                     <Button type="submit" className="w-full" disabled={!image}>Process</Button>
                   </form>
                 </div>
