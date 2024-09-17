@@ -89,6 +89,7 @@ function imageToAscii(imageElement: HTMLImageElement, options: AsciiOptions = {}
 
       // Use customized weights for brightness calculation
       let brightness = redWeight * r + greenWeight * g + blueWeight * b;
+      // let brightness = (r + g + b) / 3;
 
       if (negative) {
         brightness = 255 - brightness;
