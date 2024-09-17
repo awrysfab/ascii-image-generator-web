@@ -38,7 +38,7 @@ export function ConversionOptions({
         <div className="grid grid-cols-3 gap-4">
           <div>
             <Label htmlFor="width" className="text-sm font-semibold">Width</Label>
-            <Input id="width" type="number" value={width} onChange={(e) => setWidth(Number(e.target.value))} placeholder="Enter width" />
+            <Input id="width" type="number" value={width} min={50} max={800} step={1} onChange={(e) => setWidth(Number(e.target.value))} placeholder="Enter width" />
           </div>
           <div>
             <Label htmlFor="charColor" className="text-sm font-semibold">Char Color</Label>
