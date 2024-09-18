@@ -25,6 +25,7 @@ export function ImageConverterComponent() {
   const [charColor, setCharColor] = useState<string>("#ffffff")
   const [backgroundColor, setBackgroundColor] = useState<string>("#000000")
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -44,6 +45,7 @@ export function ImageConverterComponent() {
     }
 
     if (image) {
+      setIsLoading(true)
       const img = new window.Image()
       img.onload = () => {
         const options = {
@@ -63,6 +65,7 @@ export function ImageConverterComponent() {
         setResult(`<img src="${imageUrl}" alt="ASCII Art" style="max-width: 100%;" />`);
         setAsciiText(asciiText);
         setActiveTab("result");
+        setIsLoading(false)
       }
       img.src = image
     }
@@ -120,7 +123,9 @@ export function ImageConverterComponent() {
                       showAdvanced={showAdvanced}
                       setShowAdvanced={setShowAdvanced}
                     />
-                    <Button type="submit" className="w-full" disabled={!image}>Process</Button>
+                    <Button type="submit" className="w-full" disabled={!image || isLoading}>
+                      {isLoading ? 'Processing...' : 'Process'}
+                    </Button>
                   </form>
                 </div>
               </div>
