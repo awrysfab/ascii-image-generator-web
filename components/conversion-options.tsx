@@ -16,22 +16,35 @@ interface ConversionOptionsProps {
   setColored: (value: boolean) => void;
   negative: boolean;
   setNegative: (value: boolean) => void;
-  complex: boolean;
-  setComplex: (value: boolean) => void;
-  customAscii: string;
-  setCustomAscii: (value: string) => void;
   rgbWeights: Record<string, number>;
   setRgbWeights: (weights: { red: number; green: number; blue: number }) => void;
   showAdvanced: boolean;
   setShowAdvanced: (value: boolean) => void;
+  asciiChars: string;
+  setAsciiChars: (value: string) => void;
 }
 
 export function ConversionOptions({
   width, setWidth, charColor, setCharColor, backgroundColor, setBackgroundColor,
-  colored, setColored, negative, setNegative, complex, setComplex,
-  customAscii, setCustomAscii, rgbWeights, setRgbWeights,
-  showAdvanced, setShowAdvanced
+  colored, setColored, negative, setNegative,
+  rgbWeights, setRgbWeights,
+  showAdvanced, setShowAdvanced,
+  asciiChars, setAsciiChars
 }: ConversionOptionsProps) {
+  const defaultChars = ' .:-=+*#%@';
+  const complexChars = '" .\'^,":;Il!i><~+_-?][{}1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"';
+
+  const handleAsciiCharsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value === 'default') {
+      setAsciiChars(defaultChars);
+    } else if (value === 'complex') {
+      setAsciiChars(complexChars);
+    } else {
+      setAsciiChars('custom');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -68,14 +81,6 @@ export function ConversionOptions({
             />
             <Label htmlFor="negative" className="text-sm font-semibold">Negative</Label>
           </div>
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="complex"
-              checked={complex}
-              onCheckedChange={setComplex}
-            />
-            <Label htmlFor="complex" className="text-sm font-semibold">Complex</Label>
-          </div>
         </div>
       </div>
       <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
@@ -87,9 +92,29 @@ export function ConversionOptions({
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="customAscii" className="text-sm font-semibold">Custom ASCII Char</Label>
-            <Input id="customAscii" type="text" value={customAscii} onChange={(e) => setCustomAscii(e.target.value)} placeholder="Enter custom ASCII char" />
+            <Label className="text-sm font-semibold">ASCII Charset</Label>
+            <div className="grid grid-cols-4 gap-4">
+              <select
+                id="asciiCharsSelect"
+                value={asciiChars === defaultChars ? 'default' : asciiChars === complexChars ? 'complex' : 'custom'}
+                onChange={handleAsciiCharsChange}
+                className="w-full p-2 border rounded"
+              >
+                <option value="default">Default</option>
+                <option value="complex">Complex</option>
+                <option value="custom">Custom</option>
+              </select>
+              <Input
+                type="text"
+                value={asciiChars}
+                onChange={(e) => setAsciiChars(e.target.value)}
+                placeholder="Enter ASCII chars"
+                className="col-span-3"
+                disabled={asciiChars !== 'custom'}
+              />
+            </div>
           </div>
+
           <div className="space-y-2">
             <Label className="text-sm font-semibold">RGB Weights (must sum to 1)</Label>
             <div className="grid grid-cols-4 gap-4">

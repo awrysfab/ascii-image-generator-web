@@ -1,4 +1,4 @@
-const simpleChars = ' .:-=+*#%@';
+const defaultChars = ' .:-=+*#%@';
 const complexChars = '" .\'^,":;Il!i><~+_-?][{}1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"';
 
 interface AsciiOptions {
@@ -24,7 +24,7 @@ export function imageToAscii(imageElement: HTMLImageElement, options: AsciiOptio
     colored = false,
     negative = false,
     complex = false,
-    asciiChars = complex ? complexChars : simpleChars,
+    asciiChars = complex ? complexChars : defaultChars,
     customFgColor,
     customBgColor,
     redWeight = 0.299, // Default weight for red

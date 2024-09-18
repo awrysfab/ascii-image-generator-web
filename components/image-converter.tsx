@@ -18,10 +18,9 @@ export function ImageConverterComponent() {
   const [activeTab, setActiveTab] = useState("upload")
   const [colored, setColored] = useState(false)
   const [negative, setNegative] = useState(false)
-  const [complex, setComplex] = useState(false)
   const [rgbWeights, setRgbWeights] = useState({ red: 0.299, green: 0.587, blue: 0.114 })
   const [width, setWidth] = useState<number>(150)
-  const [customAscii, setCustomAscii] = useState<string>("")
+  const [asciiChars, setAsciiChars] = useState<string>(' .:-=+*#%@')
   const [charColor, setCharColor] = useState<string>("#ffffff")
   const [backgroundColor, setBackgroundColor] = useState<string>("#000000")
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -52,8 +51,7 @@ export function ImageConverterComponent() {
           width: width,
           colored: colored,
           negative: negative,
-          complex: complex,
-          asciiChars: customAscii || undefined,
+          asciiChars: asciiChars,
           customFgColor: charColor,
           customBgColor: backgroundColor,
           redWeight: rgbWeights.red,
@@ -114,10 +112,8 @@ export function ImageConverterComponent() {
                       setColored={setColored}
                       negative={negative}
                       setNegative={setNegative}
-                      complex={complex}
-                      setComplex={setComplex}
-                      customAscii={customAscii}
-                      setCustomAscii={setCustomAscii}
+                      asciiChars={asciiChars}
+                      setAsciiChars={setAsciiChars}
                       rgbWeights={rgbWeights}
                       setRgbWeights={(weights: { red: number; green: number; blue: number }) => setRgbWeights(weights)}
                       showAdvanced={showAdvanced}
