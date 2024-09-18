@@ -32,7 +32,7 @@ export function ConversionOptions({
   asciiChars, setAsciiChars
 }: ConversionOptionsProps) {
   const defaultChars = ' .:-=+*#%@';
-  const complexChars = '" .\'^,":;Il!i><~+_-?][{}1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"';
+  const complexChars = ' .\'^,":;Il!i><~+_-?][{}1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$';
 
   const handleAsciiCharsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -41,7 +41,7 @@ export function ConversionOptions({
     } else if (value === 'complex') {
       setAsciiChars(complexChars);
     } else {
-      setAsciiChars('custom');
+      setAsciiChars('');
     }
   };
 
@@ -110,7 +110,7 @@ export function ConversionOptions({
                 onChange={(e) => setAsciiChars(e.target.value)}
                 placeholder="Enter ASCII chars"
                 className="col-span-3"
-                disabled={asciiChars !== 'custom'}
+                required
               />
             </div>
           </div>
